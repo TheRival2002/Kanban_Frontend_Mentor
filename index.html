@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/style.css">
+
+  <script src="./js/main.js" defer></script>
+
+  <title>Frontend Mentor | Kanban task management web app</title>
+</head>
+
+<body>
+  <header class="primary-header">
+    <div class="logo-img-container">
+      <picture>
+        <source class="logo-img-toggle" srcset="./assets/logo-dark.svg" media="(min-width: 45em)">
+        <img class="logo-img" src="./assets/logo-mobile.svg" alt="page logo">
+      </picture>
+    </div>
+    <div class="header-functionality">
+      <div class="mobile-toggle-container">
+        <button class="mobile-toggle | heading-xl main-text" aria-controls="sidebar-nav">
+          Platform Launch
+          <img src="./assets/icon-chevron-down.svg" alt="">
+        </button>
+      </div>
+      <div class="header-tasks-container">
+        <button class="add-task-btn btn control-popup-btn | btn-heading-m" aria-controls="add-task-popup">
+          <img src="./assets/icon-add-task-mobile.svg" alt="">
+          <span>Add New Task</span>
+        </button>
+        <button class="customize-board" aria-controls="edit-board-popup">
+          <img src="./assets/icon-vertical-ellipsis.svg" alt="">
+        </button>
+      </div>
+      <div class="edit-board-popup | body-l">
+        <button class="edit-board-btn control-popup-btn" aria-controls="edit-popup">
+          Edit Board
+        </button>
+        <button class="delete-board  control-popup-btn" aria-controls="delete-board-popup">
+          Delete Board
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <aside class="sidebar-nav | heading-m text-neutral-400">
+    <div class="boards-info">
+      <h2>
+        all boards (<span class="boards-count">3</span>)
+      </h2>
+      <div class="all-boards">
+
+      </div>
+      <button class="new-board-btn board control-popup-btn" aria-controls="new-board-popup">
+        <img src="./assets/icon-board-purple.svg" alt="">
+        <img src="./assets/icon-add-task-fill.svg" alt="">
+        <span>create new board</span>
+      </button>
+    </div>
+    <div class="sidebar-functionality">
+      <div class="light-dark-container | main-bg">
+        <img src="./assets/icon-light-theme.svg" alt="">
+        <button class="light-dark-toggle" data-mode="light mode">
+          <span class="sr-only">
+            light mode
+          </span>
+          <span class="light-dark-icon"></span>
+        </button>
+        <img src="./assets/icon-dark-theme.svg" alt="">
+      </div>
+      <button class="hide-sidebar" aria-controls="sidebar-nav">
+        <img src="./assets/icon-hide-sidebar.svg" alt="">
+        hide sidebar
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content" data-empty="false">
+    <!-- Content shown if no boards active -->
+    <div class="empty-content">
+      <p class="heading-l text-neutral-400">This board is empty. Create a new column to get started.</p>
+      <button class="edit-board-btn btn control-popup-btn | btn-heading-m" aria-controls="edit-popup">
+        <img src="./assets/icon-add-task-mobile.svg" alt="">
+        <span>Add New Column</span>
+      </button>
+    </div>
+    <!-- Content shown for active board -->
+    <div class="board-content">
+      <div class="board-columns">
+
+      </div>
+      <div class="board-content-column">
+        <button class="edit-board-aside-btn btn control-popup-btn | heading-xl text-neutral-400"
+          aria-controls="edit-popup">
+          <img src="./assets/icon-add-task-mobile.svg" alt="">
+          <span>New Column</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Popup when add new column clicked or edit board -->
+  <section class="edit-popup | popup-common-styling" data-editing="false">
+    <h2 class="heading-l">Edit Board</h2>
+    <form class="popup-content" action="">
+      <div class="board-info">
+        <label class="text-neutral-400" for="edit-popup-name">Board Name</label>
+        <input type="text" name="name" id="edit-popup-name" autocomplete="name" required>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400">Board Columns</label>
+        <div class="board-info-columns">
+          <div class="board-info-columns-content">
+            <input type="text" value="Todo" name="todo" id="board-info-todo" required>
+            <label for="board-info-todo">
+              <button type="button">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+          </div>
+          <div class="board-info-columns-content">
+            <input type="text" value="Doing" name="doing" id="board-info-doing" required>
+            <label for="board-info-doing">
+              <button type="button">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+          </div>
+          <div class="board-info-columns-content">
+            <input type="text" value="Done" name="done" id="board-info-done" required>
+            <label for="board-info-done">
+              <button type="button">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+          </div>
+        </div>
+        <button class="add-column-target btn white-btn | btn-heading-m" aria-controls="add-column" type="button">
+          <img src="./assets/icon-add-task-mobile.svg" alt="">
+          <span>Add New Column</span>
+        </button>
+        <button class="save-column-target btn | btn-heading-m" type="submit">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Popup when add new task clicked -->
+  <section class="add-task-popup | popup-common-styling" data-editing="false">
+    <h2 class="heading-l">Add New Task</h2>
+    <form class="popup-content" action="">
+      <div class="board-info">
+        <label class="text-neutral-400" for="add-task-popup-name">Title</label>
+        <input type="text" name="name" id="add-task-popup-name" autocomplete="name" class="add-task-title"
+          placeholder="e.g. Take coffee break" required>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400" for="add-task-popup-desc">Description</label>
+        <textarea name="name" id="add-task-popup-desc"
+          placeholder="e.g. It's always good to take a break. This 15 minute break will recharge the batteries a little."></textarea>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400">Subtasks</label>
+        <div class="board-info-columns">
+          <div class="board-info-columns-content">
+            <input type="text" name="subtask-0" id="board-info-subtask-0" placeholder="e.g. Make coffee" required>
+            <label for="board-info-subtask-0">
+              <button type="button" class="remove-subtask">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+          </div>
+        </div>
+        <button class="add-subtask-target btn white-btn | btn-heading-m" aria-controls="add-subtask" type="button">
+          <img src="./assets/icon-add-task-mobile.svg" alt="">
+          <span>Add New Subtask</span>
+        </button>
+        <div class="board-info">
+          <label class="text-neutral-400" for="add-task-status">Status</label>
+          <select name="status" id="add-task-status" required>
+            <option value="Todo">Todo</option>
+            <option value="Doing">Doing</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+        <button class="save-column-target btn | btn-heading-m" type="submit">
+          Create Task
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Popup when create new board clicked-->
+  <section class="new-board-popup | popup-common-styling" data-editing="false">
+    <h2 class="heading-l">Add New Board</h2>
+    <form class="popup-content" action="">
+      <div class="board-info">
+        <label class="text-neutral-400" for="new-board-name">Board Name</label>
+        <input type="text" name="name" id="new-board-name" autocomplete="name" placeholder="e.g. Web Design" required>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400">Board Columns</label>
+        <div class="board-info-columns">
+          <div class="board-info-columns-content">
+            <input type="text" value="Todo" name="todo" id="new-board-info-todo" required>
+            <label for="new-board-info-todo">
+              <button type="button">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+          </div>
+          <div class="board-info-columns-content">
+            <input type="text" value="Doing" name="doing" id="new-board-info-doing" required>
+            <label for="new-board-info-doing">
+              <button type="button">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+          </div>
+        </div>
+        <button class="add-column-target btn white-btn | btn-heading-m" aria-controls="add-column" type="button">
+          <img src="./assets/icon-add-task-mobile.svg" alt="">
+          <span>Add New Column</span>
+        </button>
+        <button class="save-column-target btn | btn-heading-m" type="submit">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Popup when a task clicked -->
+  <section class="view-task-popup | popup-common-styling" data-editing="false">
+    <div class="view-task-title">
+      <h2 class="heading-l">Research pricing points of various competitors and trial different business models</h2>
+      <button class="customize-task" aria-controls="edit-task-popup">
+        <img src="./assets/icon-vertical-ellipsis.svg" alt="">
+      </button>
+    </div>
+    <div class="edit-task-popup | body-l">
+      <button class="edit-task-btn control-popup-btn" aria-controls="edit-single-task-popup">
+        Edit Task
+      </button>
+      <button class="delete-task  control-popup-btn" aria-controls="delete-task-popup">
+        Delete Task
+      </button>
+    </div>
+    <form class="popup-content" action="">
+      <div class="body-l text-neutral-400">
+        <p class="task-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Necessitatibus totam
+          facilis illum amet dolorem
+          perspiciatis quae quas minus illo tempora voluptatem itaque voluptates</p>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400 subtasks-status"></label>
+        <div class="board-info-columns">
+
+        </div>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400" for="current-task-status">Current Status</label>
+        <select name="current-status" id="current-task-status" disabled>
+          <option value="todo">Todo</option>
+        </select>
+      </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Popup of editing task -->
+  <section class="edit-single-task-popup | popup-common-styling" data-editing="false">
+    <h2 class="heading-l">Edit Task</h2>
+    <form class="popup-content" action="">
+      <div class="board-info">
+        <label class="text-neutral-400" for="edit-single-task-popup-name">Title</label>
+        <input type="text" name="name" class="title-value" id="edit-single-task-popup-name" value="Add authentication"
+          required>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400" for="edit-single-task-popup-desc">Description</label>
+        <textarea name="name" class="old-desc" id="edit-single-task-popup-desc"
+          placeholder="e.g. It's always good to take a break This 15 minute break will recharge the batteries a little."></textarea>
+      </div>
+      <div class="board-info">
+        <label class="text-neutral-400">Subtasks</label>
+        <div class="board-info-columns">
+
+        </div>
+        <button class="edit-single-subtask-target btn white-btn | btn-heading-m" aria-controls="edit-single-subtask"
+          type="button">
+          <img src="./assets/icon-add-task-mobile.svg" alt="">
+          <span>Add New Subtask</span>
+        </button>
+        <div class="board-info">
+          <label class="text-neutral-400" for="edit-single-task-status">Status</label>
+          <select name="edit-status" id="edit-single-task-status" required>
+
+          </select>
+        </div>
+        <button class="save-column-target btn | btn-heading-m" type="submit">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Delete board popup -->
+  <section class="delete-board-popup | popup-common-styling" data-editing="false">
+    <h2 class="heading-l text-accent-400">Delete this board?</h2>
+    <form class="popup-content" action="">
+      <div class="body-l text-neutral-400">
+        <p class="task-description">Are you sure you want to delete hte "Platform Launch" board? This action will remove
+          all columns and tasks and cannot be reversed.</p>
+      </div>
+      <div class="board-info">
+        <div class="board-info-columns">
+          <div class="board-info-columns-content">
+            <button class="delete-board-target btn | btn-heading-m red-btn" type="button">
+              Delete
+            </button>
+            <button class="cancel-target btn | btn-heading-m white-btn" type="button">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Delete task popup -->
+  <section class="delete-task-popup | popup-common-styling" data-editing="false">
+    <h2 class="heading-l text-accent-400">Delete this task?</h2>
+    <form class="popup-content" action="">
+      <div class="body-l text-neutral-400">
+        <p class="task-description">Are you sure you want to delete the "<span class="desc-title"></span>" task and its
+          subtasks? This
+          action will remove the task and cannot be reversed.</p>
+      </div>
+      <div class="board-info">
+        <div class="board-info-columns">
+          <div class="board-info-columns-content">
+            <button class="delete-task-target btn | btn-heading-m red-btn" type="button">
+              Delete
+            </button>
+            <button class="cancel-target btn | btn-heading-m white-btn" type="button">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <button class="open-sidebar" aria-controls="sidebar-nav">
+    <img src="./assets/icon-show-sidebar.svg" alt="">
+  </button>
+
+</body>
+
+</html>
