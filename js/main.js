@@ -4,6 +4,7 @@ const hideSidebarBtn = document.querySelector(".hide-sidebar");
 const openSidebarBtn = document.querySelector(".open-sidebar");
 const lightDarkToggle = document.querySelector(".light-dark-toggle");
 
+const mainContent = document.querySelector(".main-content");
 const customizeBoard = document.querySelector(".customize-board");
 const editBoardPopup = document.querySelector(".edit-board-popup");
 const customizeTask = document.querySelector(".customize-task");
@@ -19,19 +20,23 @@ let newBoardLS = [];
 let outerFlag = false;
 let changeableFlag = false;
 let deleteableFlag = false;
+let boardExistsFlag = false;
+let boardDeleteableFlag = false;
 
 const allBoards = document.querySelector(".all-boards");
 const boardsCount = document.querySelector(".boards-count");
 
-const statusColors = ["#49C4E5", "#8471F2", "#67E2AE"];
-
-function preventSubmitForm() {
-  popupContents.forEach((content) => {
-    content.addEventListener("submit", (e) => {
-      e.preventDefault();
-    });
-  });
-}
+const statusColors = [
+  "#49C4E5",
+  "#8471F2",
+  "#67E2AE",
+  "#3498db",
+  "#f1c40f",
+  "#e67e22",
+  "#7f8c8d",
+  "#27ae60",
+  "#8e44ad",
+];
 
 class Tasks {
   async tasksJson() {
@@ -85,6 +90,50 @@ class Tasks {
 }
 
 class UI {
+  // preventing to send submit event
+  preventSubmitForm() {
+    popupContents.forEach((content) => {
+      content.addEventListener("submit", (e) => {
+        e.preventDefault();
+      });
+    });
+  }
+  // function for closing mobile popup when not clicked
+  closeMobilePopup() {
+    window.addEventListener("click", (e) => {
+      if (
+        e.target === document.body ||
+        e.target.classList.contains("customize-board") ||
+        e.target.parentElement.classList.contains("customize-board")
+      ) {
+        sidebarNav.classList.remove("active");
+        sidebarNav.classList.remove("shadow-bg");
+      }
+    });
+  }
+  // function for closing customibles popups when not clicked
+  closeCustomizePopup() {
+    const inputs = document.querySelectorAll(".view-task-popup input");
+    const select = document.querySelector(".view-task-popup select");
+    window.addEventListener("click", (e) => {
+      if (
+        e.target === document.body ||
+        e.target.classList.contains("mobile-toggle") ||
+        e.target.classList.contains("single-content") ||
+        e.target.classList.contains("control-popup-btn")
+      ) {
+        editBoardPopup.classList.remove("visible");
+        editTaskPopup.classList.remove("visible");
+      }
+      if (inputs.length > 0) {
+        inputs.forEach((input) => {
+          if (e.target === input || e.target === select) {
+            editTaskPopup.classList.remove("visible");
+          }
+        });
+      }
+    });
+  }
   // firing events when buttons clicked
   appClickables() {
     mobileToggle.addEventListener("click", () => {
@@ -102,9 +151,11 @@ class UI {
     });
     customizeBoard.addEventListener("click", () => {
       editBoardPopup.classList.toggle("visible");
+      this.closeCustomizePopup();
     });
     customizeTask.addEventListener("click", () => {
       editTaskPopup.classList.toggle("visible");
+      this.closeCustomizePopup();
     });
     this.cancelDelete();
     this.popupOpen();
@@ -113,6 +164,7 @@ class UI {
     sidebarNav.classList.toggle(`${action}`);
     if (sidebarNav.classList.contains("active")) {
       sidebarNav.classList.toggle("shadow-bg");
+      this.closeMobilePopup();
     } else {
       sidebarNav.classList.remove("shadow-bg");
     }
@@ -124,10 +176,6 @@ class UI {
   cancelDelete() {
     cancelTargets.forEach((target) => {
       target.addEventListener("click", () => {
-        console.log(
-          target.parentElement.parentElement.parentElement.parentElement
-            .parentElement
-        );
         target.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.editing =
           "false";
         target.parentElement.parentElement.parentElement.parentElement.parentElement.classList.remove(
@@ -145,7 +193,16 @@ class UI {
             popup.dataset.editing = "true";
             popup.classList.add("shadow-bg");
             if (popup.classList.contains("add-task-popup")) {
-              this.addTaskInfo();
+              this.resetAddTaskInfo();
+              this.addRemoveSubtask();
+            } else if (popup.classList.contains("new-board-popup")) {
+              this.resetNewBoardInfo();
+              this.addRemoveSubtask();
+            } else if (popup.classList.contains("edit-popup")) {
+              this.resetEditBoardInfo();
+              this.addRemoveSubtask();
+            } else if (popupBtn.classList.contains("delete-board")) {
+              boardDeleteableFlag = false;
             }
             this.popupClose(popup);
           } else {
@@ -186,7 +243,12 @@ class UI {
 
             newBoardLS[activeBoard].boardColumnNames.forEach(
               (boardName, index) => {
-                if (boardName === selectValue) {
+                if (
+                  boardName === selectValue &&
+                  !newBoardLS[activeBoard].taskTitles[index].includes(
+                    newTaskTitle
+                  )
+                ) {
                   newBoardLS[activeBoard].taskTitles[index].push(newTaskTitle);
                   newBoardLS[activeBoard].taskStatuses[index].push(selectValue);
                   newBoardLS[activeBoard].taskDescs[index].push(newTaskDesc);
@@ -213,6 +275,105 @@ class UI {
               }
             );
             Storage.setBoardLS(newBoardLS, "new-board");
+          } else if (closeBtn.dataset.action === "new-board") {
+            Storage.getBoardLS("new-board")
+              ? (newBoardLS = Storage.getBoardLS("new-board"))
+              : (newBoardLS = Storage.getBoardLS("board"));
+            boardExistsFlag = false;
+
+            let newBoardTitle = document.getElementById("new-board-name").value;
+            newBoardTitle =
+              newBoardTitle[0].toUpperCase() + newBoardTitle.slice(1);
+            const newBoardSubtasks = document.querySelectorAll(
+              ".new-board-popup .board-info-columns-content input"
+            );
+
+            newBoardLS.forEach((board) => {
+              if (board.boardName === newBoardTitle) {
+                boardExistsFlag = true;
+              }
+            });
+
+            if (!boardExistsFlag) {
+              const createdBoard = {
+                boardName: newBoardTitle,
+                boardColumnNames: [],
+                subtaskCompletion: [],
+                subtaskTitles: [],
+                taskDescs: [],
+                taskStatuses: [],
+                taskTitles: [],
+              };
+
+              newBoardSubtasks.forEach((newCol, index) => {
+                createdBoard.boardColumnNames.push(newCol.value);
+                createdBoard.subtaskCompletion.push([]);
+                createdBoard.subtaskTitles.push([]);
+                createdBoard.taskDescs.push([]);
+                createdBoard.taskStatuses.push([]);
+                createdBoard.taskTitles.push([]);
+              });
+
+              newBoardLS.push(createdBoard);
+              Storage.setBoardLS(newBoardLS, "new-board");
+            }
+          } else if (closeBtn.dataset.action === "edit-board") {
+            Storage.getBoardLS("new-board")
+              ? (newBoardLS = Storage.getBoardLS("new-board"))
+              : (newBoardLS = Storage.getBoardLS("board"));
+            const activeBoard = Number(Storage.getInfoLS("active-board"));
+
+            let editBoardName =
+              document.getElementById("edit-popup-name").value;
+            editBoardName =
+              editBoardName[0].toUpperCase() + editBoardName.slice(1);
+            const editBoardColumnsInputs = document.querySelectorAll(
+              ".edit-popup .board-info-columns-content input"
+            );
+
+            newBoardLS[activeBoard].boardName = editBoardName;
+            editBoardColumnsInputs.forEach((colInput, index) => {
+              colInput.value =
+                colInput.value[0].toUpperCase() + colInput.value.slice(1);
+              if (newBoardLS[activeBoard].boardColumnNames[index]) {
+                if (
+                  newBoardLS[activeBoard].boardColumnNames[index] !==
+                  colInput.value
+                ) {
+                  newBoardLS[activeBoard].boardColumnNames[index] =
+                    colInput.value;
+                }
+              } else {
+                newBoardLS[activeBoard].boardColumnNames.push(colInput.value);
+                newBoardLS[activeBoard].subtaskCompletion.push([]);
+                newBoardLS[activeBoard].subtaskTitles.push([]);
+                newBoardLS[activeBoard].taskDescs.push([]);
+                newBoardLS[activeBoard].taskStatuses.push([]);
+                newBoardLS[activeBoard].taskTitles.push([]);
+              }
+
+              newBoardLS[activeBoard].boardColumnNames.forEach(
+                (colName, index) => {
+                  if (!editBoardColumnsInputs[index]) {
+                    newBoardLS[activeBoard].boardColumnNames.splice(index, 1);
+                    newBoardLS[activeBoard].taskDescs.splice(index, 1);
+                    newBoardLS[activeBoard].taskStatuses.splice(index, 1);
+                    newBoardLS[activeBoard].taskTitles.splice(index, 1);
+                    newBoardLS[activeBoard].subtaskCompletion.splice(index, 1);
+                    newBoardLS[activeBoard].subtaskTitles.splice(index, 1);
+                  } else if (colName !== editBoardColumnsInputs[index].value) {
+                    newBoardLS[activeBoard].boardColumnNames.splice(index, 1);
+                    newBoardLS[activeBoard].taskDescs.splice(index, 1);
+                    newBoardLS[activeBoard].taskStatuses.splice(index, 1);
+                    newBoardLS[activeBoard].taskTitles.splice(index, 1);
+                    newBoardLS[activeBoard].subtaskCompletion.splice(index, 1);
+                    newBoardLS[activeBoard].subtaskTitles.splice(index, 1);
+                  }
+                }
+              );
+
+              Storage.setBoardLS(newBoardLS, "new-board");
+            });
           }
           // the function for saving info will be called
           this.setNewBoardLS();
@@ -260,7 +421,7 @@ class UI {
       ? (newBoardLS = Storage.getBoardLS("new-board"))
       : (newBoardLS = Storage.getBoardLS("board"));
     const currentActiveBoard = newBoardLS[activeBoard];
-    if (taskLS) {
+    if (taskLS && !changeableFlag) {
       const colId = Number(taskLS.colId);
       const placeId = Number(taskLS.placeId);
 
@@ -383,10 +544,6 @@ class UI {
       });
     });
   }
-  // add task popup
-  addTaskInfo() {
-    this.addRemoveSubtask();
-  }
   // decorating view task popup by need
   viewTaskInfo(popupBtn) {
     changeableFlag = false;
@@ -408,20 +565,22 @@ class UI {
     const singleTaskInfo = newBoardLS.map((task) => {
       const colId = columnId;
       const placeId = id;
-      const singleTitle = task.taskTitles[columnId][id];
-      const singleDesc = task.taskDescs[columnId][id];
-      const singleStatus = task.taskStatuses[columnId][id];
-      const singleSubtasks = task.subtaskTitles[columnId][id];
-      const singleSubtaskCompletion = task.subtaskCompletion[columnId][id];
-      return {
-        colId,
-        placeId,
-        singleTitle,
-        singleDesc,
-        singleStatus,
-        singleSubtasks,
-        singleSubtaskCompletion,
-      };
+      if (task.taskTitles[columnId]) {
+        const singleTitle = task.taskTitles[columnId][id];
+        const singleDesc = task.taskDescs[columnId][id];
+        const singleStatus = task.taskStatuses[columnId][id];
+        const singleSubtasks = task.subtaskTitles[columnId][id];
+        const singleSubtaskCompletion = task.subtaskCompletion[columnId][id];
+        return {
+          colId,
+          placeId,
+          singleTitle,
+          singleDesc,
+          singleStatus,
+          singleSubtasks,
+          singleSubtaskCompletion,
+        };
+      }
     });
     Storage.setTaskLS("single-task", singleTaskInfo[activeBoard]);
 
@@ -572,7 +731,7 @@ class UI {
       Storage.setTaskLS("single-task", taskLS);
     });
   }
-  // adding functionality to add new subtask in edit task popup
+  // adding functionality to add new subtask in popups
   addRemoveSubtask() {
     let taskLS = Storage.getTaskLS("single-task");
     // declaring for edit subtasks
@@ -624,21 +783,25 @@ class UI {
     const addSubtasksBtn = document.querySelector(".add-subtask-target");
 
     addSubtasksBtn.addEventListener("click", () => {
-      const addTaskInputsLength = document.querySelectorAll(
+      const addTaskInputs = document.querySelectorAll(
         ".add-task-popup .board-info-columns-content input"
-      ).length;
-      const index = addTaskInputsLength;
-      const div = document.createElement("div");
-      div.classList.add("board-info-columns-content");
-      div.innerHTML = `
-        <input type="text" name="subtask-${index}" id="board-info-subtask-${index}" placeholder="e.g. Make coffee" required>
-        <label for="board-info-subtask-${index}">
-          <button type="button" class="remove-subtask">
-            <img src="./assets/icon-cross.svg" alt="">
-          </button>
-        </label>
-      `;
-      addTaskColumns.appendChild(div);
+      );
+      const index = addTaskInputs.length;
+      addTaskInputs.forEach((inputField, ind) => {
+        if (inputField.value !== "" && ind === index - 1) {
+          const div = document.createElement("div");
+          div.classList.add("board-info-columns-content");
+          div.innerHTML = `
+              <input type="text" name="subtask-${index}" id="board-info-subtask-${index}" placeholder="e.g. Make coffee" required>
+              <label for="board-info-subtask-${index}">
+                <button type="button" class="remove-subtask">
+                  <img src="./assets/icon-cross.svg" alt="">
+                </button>
+              </label>
+            `;
+          addTaskColumns.appendChild(div);
+        }
+      });
     });
 
     const cancelSubtaskAdded = document.querySelectorAll(
@@ -646,13 +809,163 @@ class UI {
     );
     cancelSubtaskAdded.forEach((cancelBtn, index) => {
       cancelBtn.addEventListener("click", () => {
-        // taskLS = Storage.getTaskLS("single-task");
         addTaskColumns.removeChild(cancelBtn.parentElement.parentElement);
-        // taskLS.singleSubtaskCompletion.splice(index, 1);
-        // taskLS.singleSubtasks.splice(index, 1);
-
-        // Storage.setTaskLS("new-task", taskLS);
       });
+    });
+
+    // declaring for creating board
+    const createBoardColumns = document.querySelector(
+      ".new-board-popup .board-info-columns"
+    );
+    const createColumnBtn = document.querySelector(".add-new-column-target");
+
+    createColumnBtn.addEventListener("click", () => {
+      const boardColumns = document.querySelectorAll(
+        ".new-board-popup .board-info-columns-content input"
+      );
+      const index = boardColumns.length;
+      boardColumns.forEach((inputField, ind) => {
+        if (inputField.value !== "" && ind === index - 1) {
+          const div = document.createElement("div");
+          div.classList.add("board-info-columns-content");
+          div.innerHTML = `
+              <input type="text" name="column-${index}" id="new-column-${index}" required>
+              <label for="new-column-${index}">
+                <button type="button" class="remove-subtask">
+                  <img src="./assets/icon-cross.svg" alt="">
+                </button>
+              </label>
+            `;
+          createBoardColumns.appendChild(div);
+        }
+      });
+    });
+
+    const cancelColumnAdded = document.querySelectorAll(
+      ".new-board-popup .remove-subtask"
+    );
+    cancelColumnAdded.forEach((cancelBtn, index) => {
+      cancelBtn.addEventListener("click", () => {
+        createBoardColumns.removeChild(cancelBtn.parentElement.parentElement);
+      });
+    });
+
+    // declaring for edit board
+    const editBoardColumns = document.querySelector(
+      ".edit-popup .board-info-columns"
+    );
+    const addColumnBtn = document.querySelector(".add-column-target");
+
+    addColumnBtn.addEventListener("click", () => {
+      const editBoardColumnsInputs = document.querySelectorAll(
+        ".edit-popup .board-info-columns-content input"
+      );
+      const index = editBoardColumnsInputs.length;
+      editBoardColumnsInputs.forEach((inputField, ind) => {
+        if (inputField.value !== "" && ind === index - 1) {
+          const div = document.createElement("div");
+          div.classList.add("board-info-columns-content");
+          div.innerHTML = `
+            <input type="text" name="edit-column-${index}" id="board-info-column-${index}" required>
+            <label for="board-info-column-${index}">
+              <button type="button" class="remove-subtask">
+                <img src="./assets/icon-cross.svg" alt="">
+              </button>
+            </label>
+            `;
+          editBoardColumns.appendChild(div);
+        }
+      });
+    });
+
+    const cancelEditColumn = document.querySelectorAll(
+      ".edit-popup .remove-subtask"
+    );
+    cancelEditColumn.forEach((cancelBtn, index) => {
+      cancelBtn.addEventListener("click", () => {
+        editBoardColumns.removeChild(cancelBtn.parentElement.parentElement);
+      });
+    });
+  }
+  // reset previous info when add new task is clicked
+  resetAddTaskInfo() {
+    Storage.getBoardLS("new-board")
+      ? (newBoardLS = Storage.getBoardLS("new-board"))
+      : (newBoardLS = Storage.getBoardLS("board"));
+    const activeBoard = Number(Storage.getInfoLS("active-board"));
+
+    const newTaskTitle = document.querySelector(".add-task-title");
+    const newTaskDesc = document.querySelector(".add-task-popup textarea");
+    const newTaskColumns = document.querySelector(
+      ".add-task-popup .board-info-columns"
+    );
+    const newTaskSubtasks = document.querySelectorAll(
+      ".add-task-popup .board-info-columns-content input"
+    );
+    const newTaskSelect = document.querySelector(".add-task-popup select");
+
+    newTaskTitle.value = "";
+    newTaskDesc.value = "";
+    newTaskSubtasks.forEach((subtask) => {
+      if (subtask.id.slice(-1) !== "0") {
+        newTaskColumns.removeChild(subtask.parentElement);
+      } else {
+        subtask.value = "";
+      }
+    });
+    newTaskSelect.textContent = "";
+    newBoardLS[activeBoard].boardColumnNames.forEach((colName) => {
+      const option = document.createElement("option");
+      option.textContent = colName;
+      option.value = colName;
+      newTaskSelect.appendChild(option);
+    });
+  }
+  // reset previous info when create new board clicked
+  resetNewBoardInfo() {
+    const newBoardName = document.getElementById("new-board-name");
+    const newBoardColumns = document.querySelector(
+      ".new-board-popup .board-info-columns"
+    );
+    const newBoardSubtasks = document.querySelectorAll(
+      ".new-board-popup .board-info-columns-content input"
+    );
+
+    newBoardName.value = "";
+    newBoardSubtasks.forEach((subtask) => {
+      if (subtask.id.slice(-1) !== "0") {
+        newBoardColumns.removeChild(subtask.parentElement);
+      } else {
+        subtask.value = "";
+      }
+    });
+  }
+  // reset previous info when edit board clicked
+  resetEditBoardInfo() {
+    Storage.getBoardLS("new-board")
+      ? (newBoardLS = Storage.getBoardLS("new-board"))
+      : (newBoardLS = Storage.getBoardLS("board"));
+    const activeBoard = Number(Storage.getInfoLS("active-board"));
+
+    const editBoardName = document.getElementById("edit-popup-name");
+    const editBoardColumns = document.querySelector(
+      ".edit-popup .board-info-columns"
+    );
+    editBoardColumns.textContent = "";
+
+    editBoardName.value = newBoardLS[activeBoard].boardName;
+    newBoardLS[activeBoard].boardColumnNames.forEach((colName, index) => {
+      const div = document.createElement("div");
+      div.classList.add("board-info-columns-content");
+      div.innerHTML += `
+        <input type="text" value="${colName}" name="edit-column-${index}" id="board-info-column-${index}" required>
+        <label for="board-info-column-${index}">
+          <button type="button" class="remove-subtask">
+            <img src="./assets/icon-cross.svg" alt="">
+          </button>
+        </label>
+      `;
+      editBoardColumns.appendChild(div);
     });
   }
   // when delete task popup is opened
@@ -692,6 +1005,50 @@ class UI {
       }
     });
   }
+  // when delete board popup is opened
+  deleteBoard() {
+    const activeBoard = Number(Storage.getInfoLS("active-board"));
+    Storage.getBoardLS("new-board")
+      ? (newBoardLS = Storage.getBoardLS("new-board"))
+      : (newBoardLS = Storage.getBoardLS("board"));
+    const delBoardPopup = document.querySelector(".delete-board-popup");
+    const delBoard = document.querySelector(".delete-board-target");
+
+    delBoard.addEventListener("click", () => {
+      if (!boardDeleteableFlag) {
+        const activeBoard = Number(Storage.getInfoLS("active-board"));
+
+        newBoardLS.splice(activeBoard, 1);
+        Storage.setBoardLS(newBoardLS, "new-board");
+        if (activeBoard > 0) {
+          Storage.setInfoLS("active-board", activeBoard - 1);
+          this.checkIfBoardsExist();
+        } else {
+          Storage.setInfoLS("active-board", activeBoard);
+          this.checkIfBoardsExist();
+        }
+        boardDeleteableFlag = true;
+
+        delBoardPopup.dataset.editing = "false";
+        delBoardPopup.classList.remove("shadow-bg");
+        newBoardLS = Storage.getBoardLS("new-board");
+        this.boardsReset();
+        this.populateBoards(newBoardLS);
+      }
+    });
+  }
+  // function for checking if there are boards made
+  checkIfBoardsExist() {
+    Storage.getBoardLS("new-board")
+      ? (newBoardLS = Storage.getBoardLS("new-board"))
+      : (newBoardLS = Storage.getBoardLS("board"));
+
+    if (newBoardLS.length > 0) {
+      mainContent.dataset.empty = false;
+    } else {
+      mainContent.dataset.empty = true;
+    }
+  }
   // function for setting boards and calling a function to set board data
   populateBoards(boards) {
     boards.forEach((board, index) => {
@@ -701,11 +1058,12 @@ class UI {
         ${board.boardName}
       </button>
       `;
+      this.checkIfBoardsExist();
       this.setActiveBoard();
       this.activeBoardFunctionality(index);
+      this.deleteBoard();
     });
     boardsCount.textContent = boards.length;
-    console.log(boards);
   }
   // reseting boards content for new load
   boardsReset() {
@@ -742,6 +1100,9 @@ class UI {
       : (newBoardLS = Storage.getBoardLS("board"));
 
     if (activeBoard === index) {
+      const delBoardSpan = document.querySelector(".board-title");
+      delBoardSpan.textContent = newBoardLS[activeBoard].boardName;
+
       const boardColumnsAmount = newBoardLS[index].boardColumnNames.length;
       for (let i = 0; i < boardColumnsAmount; i++) {
         this.populateTasks(i);
@@ -845,5 +1206,5 @@ window.addEventListener("DOMContentLoaded", () => {
     ui.populateBoards(newBoardLS);
   });
 
-  preventSubmitForm();
+  ui.preventSubmitForm();
 });

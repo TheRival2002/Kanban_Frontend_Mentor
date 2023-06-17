@@ -88,11 +88,8 @@
   <main class="main-content" data-empty="false">
     <!-- Content shown if no boards active -->
     <div class="empty-content">
-      <p class="heading-l text-neutral-400">This board is empty. Create a new column to get started.</p>
-      <button class="edit-board-btn btn control-popup-btn | btn-heading-m" aria-controls="edit-popup">
-        <img src="./assets/icon-add-task-mobile.svg" alt="">
-        <span>Add New Column</span>
-      </button>
+      <p class="heading-l text-neutral-400">There are no boards created. Create a new board to get started.</p>
+
     </div>
     <!-- Content shown for active board -->
     <div class="board-content">
@@ -120,36 +117,13 @@
       <div class="board-info">
         <label class="text-neutral-400">Board Columns</label>
         <div class="board-info-columns">
-          <div class="board-info-columns-content">
-            <input type="text" value="Todo" name="todo" id="board-info-todo" required>
-            <label for="board-info-todo">
-              <button type="button">
-                <img src="./assets/icon-cross.svg" alt="">
-              </button>
-            </label>
-          </div>
-          <div class="board-info-columns-content">
-            <input type="text" value="Doing" name="doing" id="board-info-doing" required>
-            <label for="board-info-doing">
-              <button type="button">
-                <img src="./assets/icon-cross.svg" alt="">
-              </button>
-            </label>
-          </div>
-          <div class="board-info-columns-content">
-            <input type="text" value="Done" name="done" id="board-info-done" required>
-            <label for="board-info-done">
-              <button type="button">
-                <img src="./assets/icon-cross.svg" alt="">
-              </button>
-            </label>
-          </div>
+
         </div>
         <button class="add-column-target btn white-btn | btn-heading-m" aria-controls="add-column" type="button">
           <img src="./assets/icon-add-task-mobile.svg" alt="">
           <span>Add New Column</span>
         </button>
-        <button class="save-column-target btn | btn-heading-m" type="submit">
+        <button class="save-column-target btn | btn-heading-m" data-action="edit-board" type="submit">
           Save Changes
         </button>
       </div>
@@ -189,9 +163,7 @@
         <div class="board-info">
           <label class="text-neutral-400" for="add-task-status">Status</label>
           <select name="status" id="add-task-status" required>
-            <option value="Todo">Todo</option>
-            <option value="Doing">Doing</option>
-            <option value="Done">Done</option>
+
           </select>
         </div>
         <button class="save-column-target btn | btn-heading-m" type="submit">
@@ -213,27 +185,19 @@
         <label class="text-neutral-400">Board Columns</label>
         <div class="board-info-columns">
           <div class="board-info-columns-content">
-            <input type="text" value="Todo" name="todo" id="new-board-info-todo" required>
-            <label for="new-board-info-todo">
-              <button type="button">
-                <img src="./assets/icon-cross.svg" alt="">
-              </button>
-            </label>
-          </div>
-          <div class="board-info-columns-content">
-            <input type="text" value="Doing" name="doing" id="new-board-info-doing" required>
-            <label for="new-board-info-doing">
-              <button type="button">
+            <input type="text" name="column-0" id="new-column-0" required>
+            <label for="new-column-0">
+              <button type="button" class="remove-subtask">
                 <img src="./assets/icon-cross.svg" alt="">
               </button>
             </label>
           </div>
         </div>
-        <button class="add-column-target btn white-btn | btn-heading-m" aria-controls="add-column" type="button">
+        <button class="add-new-column-target btn white-btn | btn-heading-m" aria-controls="add-column" type="button">
           <img src="./assets/icon-add-task-mobile.svg" alt="">
           <span>Add New Column</span>
         </button>
-        <button class="save-column-target btn | btn-heading-m" type="submit">
+        <button class="save-column-target btn | btn-heading-m" data-action="new-board" type="submit">
           Save Changes
         </button>
       </div>
@@ -320,7 +284,8 @@
     <h2 class="heading-l text-accent-400">Delete this board?</h2>
     <form class="popup-content" action="">
       <div class="body-l text-neutral-400">
-        <p class="task-description">Are you sure you want to delete hte "Platform Launch" board? This action will remove
+        <p class="task-description">Are you sure you want to delete the "<span class="board-title"></span>" board? This
+          action will remove
           all columns and tasks and cannot be reversed.</p>
       </div>
       <div class="board-info">
