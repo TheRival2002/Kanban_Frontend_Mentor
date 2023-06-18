@@ -402,6 +402,16 @@ body.dark-mode-enabled .sidebar-nav {
   border-right-color: var(--clr-neutral-600);
 }
 
+/* Classes for dragging elements */
+
+.hide-el {
+  display: none;
+}
+
+.drag-over {
+  outline: dashed 3px red;
+}
+
 /* Header */
 
 .primary-header {

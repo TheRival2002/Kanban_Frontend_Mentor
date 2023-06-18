@@ -529,12 +529,161 @@ class UI {
     this.lightDarkToggleStyle();
     this.appClickables();
   }
+  // functions for dragging elements
+  dragStart(e) {
+    e.dataTransfer.setData("text/plain", e.target.id);
+    setTimeout(() => {
+      e.target.classList.add("hide-el");
+    }, 0);
+    // changing the LS
+    Storage.getBoardLS("new-board")
+      ? (newBoardLS = Storage.getBoardLS("new-board"))
+      : (newBoardLS = Storage.getBoardLS("board"));
+    const activeBoard = Number(Storage.getInfoLS("active-board"));
+
+    const colId = Number(e.target.id.slice(-3, -2));
+    const placeId = Number(e.target.id.slice(-1));
+
+    let splicedTitle = newBoardLS[activeBoard].taskTitles[colId].splice(
+      placeId,
+      1
+    );
+    splicedTitle = splicedTitle[0];
+    let splicedDesc = newBoardLS[activeBoard].taskDescs[colId].splice(
+      placeId,
+      1
+    );
+    splicedDesc = splicedDesc[0];
+    let splicedStatus = newBoardLS[activeBoard].taskStatuses[colId].splice(
+      placeId,
+      1
+    );
+    splicedStatus = splicedStatus[0];
+    let splicedSubtask = newBoardLS[activeBoard].subtaskTitles[colId].splice(
+      placeId,
+      1
+    );
+    splicedSubtask = splicedSubtask[0];
+    let splicedSubtaskStatuses = newBoardLS[activeBoard].subtaskCompletion[
+      colId
+    ].splice(placeId, 1);
+    splicedSubtaskStatuses = splicedSubtaskStatuses[0];
+
+    const splicedData = {
+      splicedTitle,
+      splicedDesc,
+      splicedStatus,
+      splicedSubtask,
+      splicedSubtaskStatuses,
+    };
+
+    Storage.setTaskLS("dragged-task", splicedData);
+    Storage.setBoardLS(newBoardLS, "new-board");
+  }
+  dragEnter(e) {
+    e.preventDefault();
+    e.target.classList.add("drag-over");
+  }
+  dragOver(e) {
+    e.preventDefault();
+    e.target.classList.add("drag-over");
+  }
+  dragLeave(e) {
+    e.target.classList.remove("drag-over");
+  }
+  drop(e) {
+    function dropOnPlace(colId, placeId) {
+      newBoardLS[activeBoard].taskTitles[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedTitle
+      );
+      newBoardLS[activeBoard].taskDescs[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedDesc
+      );
+      newBoardLS[activeBoard].taskStatuses[colId].splice(
+        placeId,
+        0,
+        newBoardLS[activeBoard].boardColumnNames[colId]
+      );
+      newBoardLS[activeBoard].subtaskTitles[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedSubtask
+      );
+      newBoardLS[activeBoard].subtaskCompletion[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedSubtaskStatuses
+      );
+    }
+    e.target.classList.remove("drag-over");
+
+    const id = e.dataTransfer.getData("text/plain");
+    const draggable = document.getElementById(id);
+
+    const draggedTask = Storage.getTaskLS("dragged-task");
+    Storage.getBoardLS("new-board")
+      ? (newBoardLS = Storage.getBoardLS("new-board"))
+      : (newBoardLS = Storage.getBoardLS("board"));
+    const activeBoard = Number(Storage.getInfoLS("active-board"));
+
+    if (e.target.classList.contains("task-popup-btn")) {
+      const colId = Number(e.target.id.slice(-3, -2));
+      const placeId = Number(e.target.id.slice(-1));
+      dropOnPlace(colId, placeId);
+
+      e.target.parentElement.appendChild(draggable);
+    } else if (
+      e.target.classList.contains("single-content-title") ||
+      e.target.classList.contains("single-content-subtasks-status")
+    ) {
+      const colId = Number(e.target.parentElement.id.slice(-3, -2));
+      const placeId = Number(e.target.parentElement.id.slice(-1));
+      dropOnPlace(colId, placeId);
+
+      e.target.parentElement.parentElement.appendChild(draggable);
+    } else {
+      const colId = Number(e.target.children[0].id.slice(-3, -2));
+      const placeId = 0;
+      dropOnPlace(colId, placeId);
+
+      e.target.appendChild(draggable);
+    }
+
+    draggable.classList.remove("hide-el");
+    // set boardLS for changed data
+    Storage.setBoardLS(newBoardLS, "new-board");
+  }
   // opening the view task popup when content is pushed
   taskPopupOpen() {
     const taskPopupBtns = document.querySelectorAll(".task-popup-btn");
     const viewTaskPopup = document.querySelector(".view-task-popup");
 
+    const boardColumns = document.querySelectorAll(
+      ".board-columns .board-content-column .column-content"
+    );
+
+    boardColumns.forEach((boardCol) => {
+      boardCol.addEventListener("dragenter", this.dragEnter);
+      boardCol.addEventListener("dragover", this.dragOver);
+      boardCol.addEventListener("dragleave", this.dragLeave);
+      boardCol.addEventListener("drop", this.drop);
+      // drop event but populating boards when that happens
+      boardCol.addEventListener("drop", () => {
+        // get changed boardLS and populate boards
+        Storage.getBoardLS("new-board")
+          ? (newBoardLS = Storage.getBoardLS("new-board"))
+          : (newBoardLS = Storage.getBoardLS("board"));
+        this.boardsReset();
+        this.populateBoards(newBoardLS);
+      });
+    });
+
     taskPopupBtns.forEach((popupBtn) => {
+      popupBtn.addEventListener("dragstart", this.dragStart);
       popupBtn.addEventListener("click", () => {
         this.viewTaskInfo(popupBtn);
         viewTaskPopup.dataset.editing = "true";
@@ -1148,7 +1297,7 @@ class UI {
         return;
       });
       columnContent.innerHTML += `
-        <button class="single-content task-popup-btn" aria-controls="view-task-popup" data-column=${i} data-id=${j}>
+        <button class="single-content task-popup-btn" id="single-content-${activeBoard}-${i}-${j}" aria-controls="view-task-popup" draggable="true" data-column=${i} data-id=${j}>
           <h3 class="single-content-title">${taskTitle}</h3>
           <p class="single-content-subtasks-status">${completedSubtasks.length} of ${taskSubtasks.length} subtasks</p>
         </button>
