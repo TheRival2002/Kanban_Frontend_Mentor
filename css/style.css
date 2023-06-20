@@ -409,7 +409,7 @@ body.dark-mode-enabled .sidebar-nav {
 }
 
 .drag-over {
-  outline: dashed 3px red;
+  outline: dashed 3px var(--clr-primary-400);
 }
 
 /* Header */
@@ -1103,6 +1103,8 @@ body:has(.edit-popup[data-editing="false"]) .edit-popup {
 body:has(.add-task-popup[data-editing="true"]) .add-task-popup {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
   transform: translate(-50%, -50%);
+  max-height: 100%;
+  overflow: auto;
 }
 body:has(.add-task-popup[data-editing="false"]) .add-task-popup {
   clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
@@ -1185,6 +1187,8 @@ input[type="checkbox"] {
 body:has(.edit-single-task-popup[data-editing="true"]) .edit-single-task-popup {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
   transform: translate(-50%, -50%);
+  max-height: 100%;
+  overflow: auto;
 }
 body:has(.edit-single-task-popup[data-editing="false"])
   .edit-single-task-popup {

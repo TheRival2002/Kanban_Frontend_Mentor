@@ -591,6 +591,46 @@ class UI {
   dragLeave(e) {
     e.target.classList.remove("drag-over");
   }
+  dragEnd(e) {
+    if (e.dataTransfer.dropEffect === "none") {
+      const draggedTask = Storage.getTaskLS("dragged-task");
+      Storage.getBoardLS("new-board")
+        ? (newBoardLS = Storage.getBoardLS("new-board"))
+        : (newBoardLS = Storage.getBoardLS("board"));
+      const activeBoard = Number(Storage.getInfoLS("active-board"));
+      const colId = Number(e.target.id.slice(-3, -2));
+      const placeId = Number(e.target.id.slice(-1));
+
+      newBoardLS[activeBoard].taskTitles[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedTitle
+      );
+      newBoardLS[activeBoard].taskDescs[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedDesc
+      );
+      newBoardLS[activeBoard].taskStatuses[colId].splice(
+        placeId,
+        0,
+        newBoardLS[activeBoard].boardColumnNames[colId]
+      );
+      newBoardLS[activeBoard].subtaskTitles[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedSubtask
+      );
+      newBoardLS[activeBoard].subtaskCompletion[colId].splice(
+        placeId,
+        0,
+        draggedTask.splicedSubtaskStatuses
+      );
+
+      e.target.classList.remove("hide-el");
+      Storage.setBoardLS(newBoardLS, "new-board");
+    }
+  }
   drop(e) {
     function dropOnPlace(colId, placeId) {
       newBoardLS[activeBoard].taskTitles[colId].splice(
@@ -657,7 +697,7 @@ class UI {
     // set boardLS for changed data
     Storage.setBoardLS(newBoardLS, "new-board");
   }
-  // opening the view task popup when content is pushed
+  // opening the view task popup when content is pushed and using drag events
   taskPopupOpen() {
     const taskPopupBtns = document.querySelectorAll(".task-popup-btn");
     const viewTaskPopup = document.querySelector(".view-task-popup");
@@ -666,6 +706,7 @@ class UI {
       ".board-columns .board-content-column .column-content"
     );
 
+    // drag events
     boardColumns.forEach((boardCol) => {
       boardCol.addEventListener("dragenter", this.dragEnter);
       boardCol.addEventListener("dragover", this.dragOver);
@@ -684,6 +725,7 @@ class UI {
 
     taskPopupBtns.forEach((popupBtn) => {
       popupBtn.addEventListener("dragstart", this.dragStart);
+      popupBtn.addEventListener("dragend", this.dragEnd);
       popupBtn.addEventListener("click", () => {
         this.viewTaskInfo(popupBtn);
         viewTaskPopup.dataset.editing = "true";
@@ -892,24 +934,25 @@ class UI {
     );
 
     editSubtasksBtn.addEventListener("click", () => {
-      const editTaskInputsLength = document.querySelectorAll(
+      const editTaskInputs = document.querySelectorAll(
         ".edit-single-task-popup .board-info-columns-content input"
-      ).length;
-      const index = editTaskInputsLength;
-      const subtaskIndex = taskLS.singleSubtaskCompletion.length;
-      if (index === subtaskIndex) {
-        const div = document.createElement("div");
-        div.classList.add("board-info-columns-content");
-        div.innerHTML = `
-        <input type="text" name="edit-subtask-${subtaskIndex}" id="board-info-edit-subtask-${subtaskIndex}" value="" required>
-        <label for="board-info-edit-subtask-${subtaskIndex}">
-          <button type="button" class="remove-subtask">
-            <img src="./assets/icon-cross.svg" alt="">
-          </button>
-        </label>
-      `;
-        editTaskColumns.appendChild(div);
-      }
+      );
+      const index = editTaskInputs.length;
+      editTaskInputs.forEach((inputField, ind) => {
+        if (inputField.value !== "" && ind === index - 1) {
+          const div = document.createElement("div");
+          div.classList.add("board-info-columns-content");
+          div.innerHTML = `
+              <input type="text" name="edit-subtask-${index}" id="board-info-edit-subtask-${index}" value="" required>
+              <label for="board-info-edit-subtask-${index}">
+                <button type="button" class="remove-subtask">
+                  <img src="./assets/icon-cross.svg" alt="">
+                </button>
+              </label>
+            `;
+          editTaskColumns.appendChild(div);
+        }
+      });
     });
 
     const removeSubtasks = document.querySelectorAll(
@@ -1036,6 +1079,7 @@ class UI {
       });
     });
   }
+
   // reset previous info when add new task is clicked
   resetAddTaskInfo() {
     Storage.getBoardLS("new-board")
